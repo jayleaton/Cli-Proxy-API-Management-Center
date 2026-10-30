@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'bun:test';
+import { createInstance } from 'i18next';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { I18nextProvider } from 'react-i18next';
 import {
   readModelOptions,
   buildModelOptions,
@@ -15,6 +17,9 @@ const draft = (model: ModelAlias): ModelEntryInput => ({
   thinkingJson: model.thinking === undefined ? undefined : JSON.stringify(model.thinking),
   ...readModelOptions(model),
 });
+
+const i18n = createInstance();
+await i18n.init({ lng: 'cimode', initImmediate: false, react: { useSuspense: false } });
 
 describe('provider model options', () => {
   test('editing hybrid levels preserves budgets, explicit booleans and future fields', () => {
@@ -174,13 +179,17 @@ describe('provider model options', () => {
 
   const render = (brand: ProviderBrand, disabled = false, enabled = true) =>
     renderToStaticMarkup(
-      createElement(ModelAdvancedFields, {
-        entry: { name: 'model', thinkingEnabled: enabled },
-        providerBrand: brand,
-        disabled,
-        supportsThinking: true,
-        onUpdate: () => {},
-      })
+      createElement(
+        I18nextProvider,
+        { i18n },
+        createElement(ModelAdvancedFields, {
+          entry: { name: 'model', thinkingEnabled: enabled },
+          providerBrand: brand,
+          disabled,
+          supportsThinking: true,
+          onUpdate: () => {},
+        })
+      )
     );
 
   test('gates fields by provider capability', () => {
